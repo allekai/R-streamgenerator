@@ -201,7 +201,6 @@ generate.row <- function(dim=10,
     if (marginFactor != 1) {point <- row}
     n <- length(subspaces[[subspace]])
     diagonals.list <- createDiagList(n)
-    # T.B.D.
     diagonals.projections <- vector("list", (n + 1))
     diffs <- vector("list", (n + 1))
     for (i in 1:(n + 1)) {
@@ -719,9 +718,9 @@ generate.row <- function(dim=10, subspaces=list(c(3,4), c(7,8)), margins=list(0.
     diagonals.projections <- vector("list", (n+1))
     diffs <- vector("list", (n+1))
     for (i in 1:(n+1)) {
-      diagonals.projections[[i]] <- getVectorProjectionOnDiagonal(diagonals.list$starts[[i]],
-                                                                diagonals.list$ends[[i]],
-                                                                point);
+      diagonals.projections[[i]] <- getVectorProjection(diagonals.list$starts[[i]],
+                                                        diagonals.list$ends[[i]],
+                                                        point);
       diffs[i] <- getEuklidLen(diagonals.projections[[i]]$va2)
     }
     all(diffs > 0.5 - (margins[[subspace]]*marginFactor)/2)
@@ -1005,7 +1004,7 @@ generate.row <- function(dim=10, subspaces=list(c(3,4), c(7,8)), margins=list(0.
 #'
 #' @md
 #' @return A list with 2 elements where \code{data} is a data.frame object containing the \code{n} vectors and \code{labels} containing \code{n} corresponding labels. 
-generate.multiple.rows <- function(n, dim, subspaces, margins, dependency, prop, proptype, discretize) {
+generate.multiple.rows <- function(n, dim, subspaces, margins, dependency, prop, proptype, discretize, verbose) {
   # no sanity check, assumed to be done already 
   data <- data.frame()
   labels <- c()
@@ -1013,6 +1012,7 @@ generate.multiple.rows <- function(n, dim, subspaces, margins, dependency, prop,
     res <- generate.row(dim=dim, subspaces=subspaces, margins=margins, dependency=dependency, prop=prop, proptype=proptype,  discretize=discretize)
     data <- rbind(data, t(res$data))
     labels <- c(labels, res$label)
+    if(verbose) print(c("Step: ", paste(x)))
   }
   attributes(data)$names <- c(c(1:dim),"class")
   list("data"=data, "labels"=labels)

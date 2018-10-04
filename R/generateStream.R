@@ -53,7 +53,7 @@
 #' @md
 #' @export
 generate.static.stream <- function(n=1000, prop=0.01, proptype="proportional",
-                                   stream.config=NULL) {
+                                   stream.config=NULL, verbose=FALSE) {
   # Generate n points with dim dimensions where the list of subspaces are
   # generated wall-like with the size of the wall taken from margins list as
   # 1-margin. In the hidden space, a proportion prop of the points is taken as
@@ -77,7 +77,7 @@ generate.static.stream <- function(n=1000, prop=0.01, proptype="proportional",
 
   meta <- generate.multiple.rows(n, dim, subspaces, margins, prop,
                                  proptype=proptype, dependency=dependency,
-                                 discretize=discretize)
+                                 discretize=discretize, verbose=verbose)
 
   res <- list("data"=meta$data,"labels"=meta$labels, "n"=n, "prop"=prop,
               "proptype"=proptype, "allowOverlap"=allowOverlap,
