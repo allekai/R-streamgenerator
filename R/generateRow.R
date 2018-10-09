@@ -186,13 +186,12 @@ generate.row <- function(dim=10,
 
   isInHiddenSpace.Cross <- function(row, subspace, marginFactor=1) {
     createDiagList <- function(n=2) {
-      result <- c(starts=vector("list", (n + 1)), ends=vector("list", (n + 1)))
-      result$starts[[1]] <- rep(0, n)
-      result$ends[[1]] <- rep(1, n)
-      for (i in 2:(n + 1)) {
-        result$starts[[i]] <- rep(0, n)
-        result$starts[[i]][[i - 1]] <- 1
-        result$ends[[i]] <- createOppositePoint(result$starts[[i]])
+      result <- list()
+      l <- rep(list(0:1), n)
+      all.corners <- expand.grid(l)
+      for (i in 1:(2^(n-1))) {
+          result$starts[[i]] <- all.corners[i,]
+          result$ends[[i]] <- all.corners[2^n-(i-1),]
       }
       result
     }
@@ -201,15 +200,15 @@ generate.row <- function(dim=10,
     if (marginFactor != 1) {point <- row}
     n <- length(subspaces[[subspace]])
     diagonals.list <- createDiagList(n)
-    diagonals.projections <- vector("list", (n + 1))
-    diffs <- vector("list", (n + 1))
-    for (i in 1:(n + 1)) {
+    diagonals.projections <- vector("list", (2^n))
+    diffs <- list()
+    for (i in 1:(2^(n-1))) {
       diagonals.projections[[i]] <- getVectorProjection(diagonals.list$starts[[i]],
                                                         diagonals.list$ends[[i]],
                                                         point);
-      diffs[i] <- getEuclideanLength(diagonals.projections[[i]]$va2)
+      diffs[[i]] <- getEuclideanLength(diagonals.projections[[i]]$va2)
     }
-    all(diffs > 0.5 - (margins[[subspace]] * marginFactor) / 2)
+    all(diffs >  (1 - (margins[[subspace]] * marginFactor)) / 2)
   }
 
   isInHiddenSpace.Hourglass <- function(row, subspace, marginFactor=1) {
@@ -339,11 +338,11 @@ generate.row <- function(dim=10,
       2 * (sin.star(s) - point[2]) * cos(2 * pi * s) * pi
     }
 
-    # Calculate all zero points of dsd. Differentiante between 2D and 3D.
+    # Calculate all zero points of dsd. Differentiate between 2D and 3D.
     if (n == 2) {
-      zero.points <- uniroot.all(dsd.3D, c(0, 1))
-    } else {
       zero.points <- uniroot.all(dsd.2D, c(0, 1))
+    } else {
+      zero.points <- uniroot.all(dsd.3D, c(0, 1))
     }
 
     # Save sine dependency vectors obtained from zero.points to a matrix.
@@ -595,7 +594,7 @@ generate.row <- function(dim=10,
 #'         containing the \code{n} vectors and \code{labels} containing \code{n}
 #'         corresponding labels.
 generate.multiple.rows <- function(n, dim, subspaces, margins, dependency,
-                                   prop, proptype, discretize) {
+                                   prop, proptype, discretize, verbose) {
   # no sanity check, assumed to be done already
   data <- data.frame()
   labels <- c()
@@ -605,6 +604,7 @@ generate.multiple.rows <- function(n, dim, subspaces, margins, dependency,
                         discretize=discretize)
     data <- rbind(data, t(res$data))
     labels <- c(labels, res$label)
+    if(verbose) print(c("Step:", paste(x)))
   }
   attributes(data)$names <- c(c(1:dim),"class")
   list("data"=data, "labels"=labels)
