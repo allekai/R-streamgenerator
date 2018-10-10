@@ -10,6 +10,10 @@
 #' @param proptype Type of the proportion of outliers. Value "proportional":
 #         depends on the size of the empty space. Value "absolute": same
 #         absolute proportion per subspace.
+#' @param discretize Number of discrete values in each dimension. Defaults to
+# '       zero, i.e. the stream is continuous. Can not be equal to 1. For every
+#'        Integer value greater than 1, each dimension will have the provided
+#'        number values, each being equidistant to another.
 #'
 #' @return A list with 2 elements where \code{data} contains the generated
 #          vector and \code{labels} the corresponding label.
