@@ -40,6 +40,7 @@
 #'
 #' @md
 #' @importFrom stats runif
+#' @importFrom rootSolve uniroot.all
 generate.row <- function(dim=10,
                          subspaces=list(c(3,4), c(7,8)),
                          margins=list(0.9,0.9),
