@@ -4,7 +4,6 @@
 \name{streamgenerator}
 \alias{streamgenerator}
 \alias{streamgenerator-package}
-\alias{streamgenerator-package}
 \title{streamgenerator}
 \description{
 A statistical muldi-dimensional stream generator for benchmarking stream mining algorithms.

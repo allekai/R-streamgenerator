@@ -14,25 +14,32 @@ generate.subspaces(dim = 20, mindim = 2, maxdim = 4,
 
 \item{maxdim}{Maximum number of dimensions for a subspace.}
 
-\item{allowOverlap}{States whether overlap between subspaces are allowed. (might be a bit more complex if TRUE.). Note that full overlap and subset relation are never allowed.}
+\item{allowOverlap}{States whether overlap between subspaces are allowed
+(might be a bit more complex if TRUE). Note that full overlap and
+subset relation are never allowed.}
 }
 \value{
-A list of partly overlapping subspaces spanning over the \code{dim} dimensions
+A list of partly overlapping subspaces spanning over the \code{dim}
+dimensions
 }
 \description{
-Random generation of partly overlapping consecutive subspaces with a minimum number of dimensions \code{mindim}
-and a maximum number of dimensions \code{maxdim} from a total number of dimensions \code{dim}.
+Random generation of partly overlapping consecutive subspaces with a minimum
+number of dimensions \code{mindim}
+and a maximum number of dimensions \code{maxdim} from a total number of
+dimensions \code{dim}.
 }
 \details{
-Generate at most \code{round((dim*0.75)/length(mindim:maxdim)/x)} subspaces of each size \code{x}
+Generate at most \code{round((dim*0.75)/length(mindim:maxdim)/x)} subspaces
+of each size \code{x}.
 For example, for \code{generate.subspaces(dim=100, maxdim=5, mindim=2)}:
 \itemize{
 \item at most 4 5-dim subspaces
 \item at most 5 4-dim subspaces
 \item at most 6 3-dim subspaces
 \item at most 10 2-dim subspaces
-This is done so to make sure that roughly a least 25% of the dimensions are unaffected
-This also make sure the dimensions are not dominated by high-dimensional subspaces
+This is done so to make sure that roughly a least 25% of the dimensions are
+unaffected. This also make sure the dimensions are not dominated by
+high-dimensional subspaces.
 TODO: Can this be improved?
 }
 }

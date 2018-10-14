@@ -20,10 +20,12 @@ generate.marginslist(subspaces, nstep = 10, volatility = 0.1,
 A list containing lists of margins for each step
 }
 \description{
-Generate iteratively a list of margins for the same set of subspaces with a particular volatility (not used currently)
+Generate iteratively a list of margins for the same set of subspaces with a
+particular volatility (not used currently)
 }
 \examples{
-generate.marginslist(list(c(1,2,3), c(4,5), c(5,6), c(7,8)), nstep=3, volatility=0.5)
+generate.marginslist(list(c(1,2,3), c(4,5), c(5,6), c(7,8)), nstep=3,
+                          volatility=0.5)
 
 }
 \author{

@@ -4,33 +4,46 @@
 \alias{generate.stream.config}
 \title{Valid stream configuration}
 \usage{
-generate.stream.config(dim = 20, mindim = 2, maxdim = 4, values = c(0.1,
-  0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), nstep = 10, dependency = "Wall",
-  discretize = 0, cycle = 0, volatility = 0.1, allowOverlap = FALSE)
+generate.stream.config(dim = 20, mindim = 2, maxdim = 4,
+  values = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), nstep = 10,
+  dependency = "Wall", discretize = 0, cycle = 0, volatility = 0.1,
+  allowOverlap = FALSE)
 }
 \arguments{
 \item{dim}{Number of dimensions in the stream.}
 
-\item{mindim}{Minimum number of dimensions for each subspaces. Should be >= 2.}
+\item{mindim}{Minimum number of dimensions for each subspaces. Should be
+>= 2.}
 
-\item{maxdim}{Maximum number of dimensions for each subspaces. Should be >= mindim and <= dim/2.}
+\item{maxdim}{Maximum number of dimensions for each subspaces. Should be
+>= mindim and <= dim/2.}
 
 \item{values}{A vector of valid values for subspace margins.}
 
-\item{nstep}{Number of steps for which we generate new subspaces and margin values.}
+\item{nstep}{Number of steps for which we generate new subspaces and margin
+values.}
 
-\item{dependency}{Type of dependencies available in the stream, currently either "Wall" or "Square" or "Donut" (in the future: "Mixed")}
+\item{dependency}{Type of dependencies available in the stream, currently
+either "Wall" or "Square" or "Donut" (in the future: "Mixed")}
 
-\item{cycle}{Number of iterations to use to create a cyclic streams. If 0, then the stream has no cycle.}
+\item{cycle}{Number of iterations to use to create a cyclic streams. If 0,
+then the stream has no cycle.}
 
-\item{volatility}{Proportion of subspaces to change at any step. Should be > 0 and <= 1. 1 means that all subspaces and margins at changed a each step}
+\item{volatility}{Proportion of subspaces to change at any step. Should be
+> 0 and <= 1. 1 means that all subspaces and margins at changed a each
+step.}
 
-\item{allowOverlap}{States whether overlap between subspaces are allowed. (might be a bit more complex if TRUE.). Note that full overlap and subset relation are never allowed.}
+\item{allowOverlap}{States whether overlap between subspaces are allowed.
+(might be a bit more complex if TRUE.). Note that full overlap and
+subset relation are never allowed.}
 
-\item{decretize}{whether the output should be discrete or not. 0 means it is real. Any other number of discrete possible values. (10 is the minumum)}
+\item{decretize}{whether the output should be discrete or not. 0 means it is
+real. Any other number of discrete possible values. (10 is the
+minumum)}
 }
 \value{
-A stream.config object to be passed to a generate.dynamic.stream or generate.static.stream method
+A stream.config object to be passed to a generate.dynamic.stream or
+generate.static.stream method.
 }
 \description{
 Generate a valid stream configuration.

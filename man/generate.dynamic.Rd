@@ -13,7 +13,8 @@ generate.dynamic(dim, subspaces, nstep = 10, volatility = 0.1,
 
 \item{subspaces}{A list of generated subspaces.}
 
-\item{nstep}{Number of steps for which we generate new subspaces and margin values.}
+\item{nstep}{Number of steps for which we generate new subspaces and margin
+values.}
 
 \item{volatility}{Percentage of subspaces to replace at each step.}
 
@@ -21,7 +22,9 @@ generate.dynamic(dim, subspaces, nstep = 10, volatility = 0.1,
 
 \item{cycle}{If > 0 the dynamic contains a cycle of this size.}
 
-\item{allowOverlap}{States whether overlap between subspaces are allowed. (might be a bit more complex if TRUE.). Note that full overlap and subset relation are never allowed.}
+\item{allowOverlap}{States whether overlap between subspaces are allowed
+(might be a bit more complex if TRUE). Note that full overlap and
+subset relation are never allowed.}
 }
 \value{
 A list with two elements:
@@ -31,16 +34,20 @@ A list with two elements:
 }
 }
 \description{
-Generate iteratively a list of subspaces and margins based on the initial set of subspaces with a particular volatility
+Generate iteratively a list of subspaces and margins based on the initial set
+of subspaces with a particular volatility
 }
 \details{
-For each step produce a new set of (possibly overlapping) subspaces where length(subspaces)*volatility subspaces were changed
-and assigned a margin taken from values
+For each step produce a new set of (possibly overlapping) subspaces where
+length(subspaces)*volatility subspaces were changed and assigned a margin
+taken from values
 }
 \examples{
 subspaces <- list(c(1,2,3), c(3,4), c(5,6,7,8), c(7,8,9))
-meta <- generate.dynamic(dim=20, subspaces=subspaces, nstep=3, volatility=0.5)
-meta_cycle <- generate.dynamic(dim=20, subspaces=subspaces, nstep=10, volatility=0.5, cycle=3)
+meta <- generate.dynamic(dim=20, subspaces=subspaces, nstep=3,
+                         volatility=0.5)
+meta_cycle <- generate.dynamic(dim=20, subspaces=subspaces, nstep=10,
+                               volatility=0.5, cycle=3)
 
 }
 \author{

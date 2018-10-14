@@ -14,7 +14,7 @@ LazyData: TRUE
 Encoding: UTF-8
 Imports: 
 	assertthat
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 NeedsCompilation: no
 Repository: CRAN
 Suggests: testthat

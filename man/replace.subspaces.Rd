@@ -13,14 +13,18 @@ replace.subspaces(dim, subspaces, indexes, allowOverlap = FALSE)
 
 \item{indexes}{Positions of the subspaces to replace.}
 
-\item{allowOverlap}{States whether overlap between subspaces are allowed. (might be a bit more complex if TRUE.). Note that full overlap and subset relation are never allowed.}
+\item{allowOverlap}{States whether overlap between subspaces are allowed
+(might be a bit more complex if TRUE). Note that full overlap and
+subset relation are never allowed.}
 }
 \value{
-The original set of subspaces, where the places at \code{indexes} were modified
+The original set of subspaces, where the places at \code{indexes}
+were modified
 }
 \description{
 Resample compatible subspaces to replace a set of subspaces.
-The new subspaces should not include or be included in another subspace from the original set.
+The new subspaces should not include or be included in another subspace from
+the original set.
 }
 \examples{
 subspaces <- list(c(1,2,3), c(3,4,5), c(7,8), c(11,12), c(15,16))

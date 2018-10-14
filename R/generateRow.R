@@ -11,9 +11,16 @@
 #         depends on the size of the empty space. Value "absolute": same
 #         absolute proportion per subspace.
 #' @param discretize Number of discrete values in each dimension. Defaults to
-# '       zero, i.e. the stream is continuous. Can not be equal to 1. For every
+#'       zero, i.e. the stream is continuous. Can not be equal to 1. For every
 #'        Integer value greater than 1, each dimension will have the provided
 #'        number values, each being equidistant to another.
+#' @param method Defines the point generation method. "Rejection" creates points
+#'        randomly until they fit into the dependency. "Construction" creates points
+#'        that are close to the relation with respect to the margin. If proptype is
+#'        "proportional" then first a random point is generated to check, whether the
+#'        point is in the hidden space and may become an outlier. If proptype is
+#'        "absolute" the decision whether the point becomes an outlier is made piror
+#'        to its generatrion. Defaults to "Rejection".
 #'
 #' @return A list with 2 elements where \code{data} contains the generated
 #          vector and \code{labels} the corresponding label.
@@ -32,7 +39,7 @@
 #'
 #' If the point is not an outlier, it will have \code{0} as label, otherwise it has a string representing the different subspaces.
 #'
-#' @author Edouard Fouché, \email{edouard.fouche@kit.edu}
+#' @author Edouard Fouch?, \email{edouard.fouche@kit.edu}
 #'
 #' @seealso
 #' * \code{\link{generate.dynamic.stream}} : generate a dynamic stream
@@ -47,7 +54,9 @@ generate.row <- function(dim=10,
                          dependency = "Wall",
                          prop=0.01,
                          proptype="proportional",
-                         discretize=0) {
+                         discretize=0,
+                         method="Rejection",
+                         verbose = FALSE) {
   # no sanity check, assumed to be done already
 
   ########## Some helper functions ############
@@ -92,6 +101,7 @@ generate.row <- function(dim=10,
     result$va2 <- (point - start) - result$va1
     result
   }
+  
   createOppositePoint <- function(point) {
     # A helper function to create "opposing" points inside a unit hypercube.
     # "Opposing" in this case means mirrored around the 0.5-vector
@@ -131,6 +141,30 @@ generate.row <- function(dim=10,
       corners
     }
   }
+  
+  createDiagList <- function(n=2) {
+    # Create a list of diagonals.
+    #
+    # Creates the start and end points of the diagonals
+    # in a n-dimensional unit hypercube. The start and
+    # end points of a diagonal have flipped values, i.e.
+    # 0 -> 1 and 1 -> 0.
+    #
+    # Args:
+    #   n: The number of dimensions
+    #
+    # Returns:
+    #   A list of two lists with start and end points of
+    #   the diagonals in a hypercube each.
+    result <- list()
+    l <- rep(list(0:1), n)
+    all.corners <- expand.grid(l)
+    for (i in 1:(2^(n-1))) {
+      result$starts[[i]] <- all.corners[i,]
+      result$ends[[i]] <- all.corners[2^n-(i-1),]
+    }
+    result
+  }
 
   sin.star <- function(s) {
     # This function reshapes the standard sin-function so that a full cycle fits
@@ -162,8 +196,79 @@ generate.row <- function(dim=10,
         c(s, sin.star(s))
     }
   }
+  
+  linDep <- function(direction, suppVec, margin=0.1){
+    # This function creates a point around a line.
+    #
+    # Args:
+    #   direction: A directional vector of the line.
+    #   suppVec: The support vector of the line.
+    #   margin: Half of the provided value is the maximal distance from the
+    #           line in one dimension.
+    #
+    # Returns:
+    #   A vector containing the data point.
+    if(!(length(direction) == length(suppVec))) {
+      stop("Direction and suppVec need to have the same dimension.")
+    }
+    weight <- runif(1, 0, 1)
+    new.val <- c(weight*direction + suppVec)
+    start.val <- new.val
+    m <- 1-margin
+    for (d in 1:length(suppVec)) {
+      new.val[[d]] <- new.val[[d]] + runif(1, -m/2, m/2)
+      if(new.val[[d]] < 0 || new.val[[d]] > 1) {
+        while(new.val[[d]] < 0 || new.val[[d]] > 1) {
+          new.val[[d]] <- start.val[[d]] + runif(1, -m/2, m/2)
+        }
+      }
+    }
+    new.val
+  }
+  
+  getHOPs <- function(start, n, oppDim) {
+    corners <- getCorners(n=n, makePretty=FALSE)
+    # create the "oppValue" for the desired dimension (oppDim)
+    oppValue <- createOppositePoint(start[[oppDim]])
+    # replace the value of the oppDim of all corners
+    for (i in 1:nrow(corners)) {
+      corners[i,][oppDim] <- oppValue
+    }
+    # remove duplicates
+    corners <- unique(corners)
+    # rename rows and transform to a list of vectors
+    rownames(corners) <- 1:nrow(corners)
+    result <- vector("list", nrow(corners))
+    for (i in 1:nrow(corners)) {
+      result[[i]] <- as.vector(corners[i,], mode="integer")
+    }
+    result
+  }
+  
+  createHOPLines <- function(n=2) {
+    # The hourglass lines are the vectors between a corner of the
+    # hypercube and its ``HOPs'' (Hourglass Opposing Points). A HOP can be
+    # any other corner of the hypercube other than the starting point as long
+    # as the value of a pre-specified dimension is different (by only using
+    # the corners, the values in question can only be either 0 or 1).
+    #
+    # Example: Assume we have a 3D Hourglass.
+    # We thus have vectors (x,y,z). For finding the HOPs of a corner, we
+    # want x to be the opposite. Thus, the point (0,0,0) would have the
+    # following HOPs:
+    # (1,0,0), (1,1,0), (1,0,1) and (1,1,1)
+    #
+    # In general we have 2^(n-1) HOPs per corner in a n-dimensional hypercube.
+    corners <- getCorners(n=n, makePretty=TRUE)
+    result = vector("list", length(corners))
+    for (i in 1:length(corners)) {
+      result[[i]][["starts"]] <- corners[[i]]
+      result[[i]][["endList"]] <- getHOPs(result[[i]][["starts"]], n, 1)
+    }
+    result
+  }
 
-    ########## Actual functions ############
+  ########## Actual functions ############
 
   isInHiddenSpace.Wall <- function(row, subspace) {
       all(row[subspaces[[subspace]]] > 1 - margins[[subspace]])
@@ -190,17 +295,6 @@ generate.row <- function(dim=10,
   }
 
   isInHiddenSpace.Cross <- function(row, subspace, marginFactor=1) {
-    createDiagList <- function(n=2) {
-      result <- list()
-      l <- rep(list(0:1), n)
-      all.corners <- expand.grid(l)
-      for (i in 1:(2^(n-1))) {
-          result$starts[[i]] <- all.corners[i,]
-          result$ends[[i]] <- all.corners[2^n-(i-1),]
-      }
-      result
-    }
-
     point <- row[subspaces[[subspace]]]
     if (marginFactor != 1) {point <- row}
     n <- length(subspaces[[subspace]])
@@ -217,47 +311,6 @@ generate.row <- function(dim=10,
   }
 
   isInHiddenSpace.Hourglass <- function(row, subspace, marginFactor=1) {
-    getHOPs <- function(start, n, oppDim) {
-      corners <- getCorners(n=n, makePretty=FALSE)
-      # create the "oppValue" for the desired dimension (oppDim)
-      oppValue <- createOppositePoint(start[[oppDim]])
-      # replace the value of the oppDim of all corners
-      for (i in 1:nrow(corners)) {
-        corners[i,][oppDim] <- oppValue
-      }
-      # remove duplicates
-      corners <- unique(corners)
-      # rename rows and transform to a list of vectors
-      rownames(corners) <- 1:nrow(corners)
-      result <- vector("list", nrow(corners))
-      for (i in 1:nrow(corners)) {
-        result[[i]] <- as.vector(corners[i,], mode="integer")
-      }
-      result
-    }
-    createHOPLines <- function(n=2) {
-      # The hourglass lines are the vectors between a corner of the
-      # hypercube and its ``HOPs'' (Hourglass Opposing Points). A HOP can be
-      # any other corner of the hypercube other than the starting point as long
-      # as the value of a pre-specified dimension is different (by only using
-      # the corners, the values in question can only be either 0 or 1).
-      #
-      # Example: Assume we have a 3D Hourglass.
-      # We thus have vectors (x,y,z). For finding the HOPs of a corner, we
-      # want x to be the opposite. Thus, the point (0,0,0) would have the
-      # following HOPs:
-      # (1,0,0), (1,1,0), (1,0,1) and (1,1,1)
-      #
-      # In general we have 2^(n-1) HOPs per corner in a n-dimensional hypercube.
-      corners <- getCorners(n=n, makePretty=TRUE)
-      result = vector("list", length(corners))
-      for (i in 1:length(corners)) {
-        result[[i]][["starts"]] <- corners[[i]]
-        result[[i]][["endList"]] <- getHOPs(result[[i]][["starts"]], n, 1)
-      }
-      result
-    }
-
     if (marginFactor != 1) {
         point <- row  # assume call from ensureOutlyingBehavior
     } else {
@@ -425,6 +478,90 @@ generate.row <- function(dim=10,
     }
     p
   }
+  
+  constructPoint.Wall <- function(subspace){
+    n <- length(subspaces[[subspace]])
+    index <- sample(x = 1:n, size = 1)  # Index of dimension < margin
+    point <- runif(n)
+    point[index] <- runif(1, 0, 1-margins[[subspace]])
+    point
+  }
+  
+  construcPoint.Square <- function(subspace) {
+    n <- length(subspaces[[subspace]])
+    index <- sample(x = 1:n, size = 1)  # Index of dimension < margin
+    point <- runif(n)
+    point[index] <- sample(c(runif(1, 0, 1-margins[[subspace]]),
+                             runif(1, margins[[subspace]], 1)), 1)
+    point
+  }
+  
+  constructPoint.Donut <- function(n) {
+    # Still has some random characteristic.
+    # Based on Marsaglia 1972.
+    # Generate random point inside the unit hypercube.
+    # Rescale it to the surface of a n-sphere, add some
+    # noise to the point and resacle it to fit into the
+    # unit hypercube again.
+    x <- runif(n, -1, 1)
+    r <- sqrt(sum(x**2))
+    while(r >= 1) {
+      x <- runif(n, -1, 1)
+      r <- sqrt(sum(x**2))
+    }
+    normalized.x <- x / r
+    point <- normalized.x
+    for (d in 1:n) {
+      point[[d]] <- point[[d]] -  runif(1, 0, 0.1)
+    }
+    point / 2 + rep(0.5, n)
+  }
+  
+  constructPoint.Linear <- function(subspace) {
+    n <- length(subspaces[[subspace]])
+    point <- linDep(rep(1, n), rep(0, n), margins[[subspace]])
+  }
+  
+  constructPoint.Cross <- function(subspace) {
+    n <- length(subspaces[[subspace]])
+    diagonals.list <- createDiagList(n)
+    index <- round(runif(1, 1, 2^(n - 1)))  # Index of random diagonal
+    direction <- diagonals.list$ends[[index]] - diagonals.list$starts[[index]]
+    point  <- linDep(direction, diagonals.list$starts[[index]], margins[[subspace]])
+    point
+  }
+  
+  constructPoint.Hourglass <- function(subspace) {
+    #browser()
+    n <- length(subspaces[[subspace]])
+    # Chose opposing dimension
+    oppDim <- sample(x = 1:n, size = 1)
+    # Chose starting corner
+    start <- sample(x = c(0,1), size = n, replace = TRUE)
+    # Create a HOP
+    end <- sample(x = c(0,1), size = n, replace = TRUE)
+    end[oppDim] <- (start[oppDim] - 1) * (-1)
+    point <- linDep2(direction = as.vector(end - start, mode = "integer"),
+                     suppVec = start,
+                     margin = margins[[subspace]])
+    point
+  }
+  
+  constructPoint.Sine <- function(subspace) {
+    n <- length(subspaces[[subspace]])
+    m <- 1 - margins[[subspace]]
+    point <- wrap.sin.star(s = runif(1), n = n)
+    start.point <- point
+    for (d in 1:n) {
+      point[[d]] <- point[[d]] + runif(1, -m/2, m/2)
+      if(point[[d]] < 0 || point[[d]] > 1) {
+        while(point[[d]] < 0 || point[[d]] > 1) {
+          point[[d]] <- start.point[[d]] + runif(1, -m/2, m/2)
+        }
+      }
+    }
+    point
+  }
 
   outlierFlags <- rep(FALSE, length(subspaces))
   r <- runif(dim)
@@ -433,33 +570,45 @@ generate.row <- function(dim=10,
     if(dependency == "Wall") {
       isInHiddenSpace <- isInHiddenSpace.Wall
       ensureOutlyingBehavior <- ensureOutlyingBehavior.Wall
+      constructPoint <- constructPoint.Wall
     } else if(dependency == "Square") {
       isInHiddenSpace <- isInHiddenSpace.Square
       ensureOutlyingBehavior <- ensureOutlyingBehavior.Square
+      constructPoint <- construcPoint.Square
     } else if(dependency == "Donut") {
       isInHiddenSpace <- isInHiddenSpace.Donut
       ensureOutlyingBehavior <- ensureOutlyingBehavior.Donut
+      constructPoint <- constructPoint.Donut
     } else if (dependency == "Linear") {
       isInHiddenSpace <- isInHiddenSpace.Linear
       ensureOutlyingBehavior <- ensureOutlyingBehavior.Linear
+      constructPoint <- constructPoint.Linear
     } else if (dependency == "Cross") {
       isInHiddenSpace <- isInHiddenSpace.Cross
       ensureOutlyingBehavior <- ensureOutlyingBehavior.Cross
+      constructPoint <- constructPoint.Cross
     } else if (dependency == "Hourglass") {
       isInHiddenSpace <- isInHiddenSpace.Hourglass
       ensureOutlyingBehavior <- ensureOutlyingBehavior.Hourglass
+      constructPoint <- constructPoint.Hourglass
     } else if (dependency == "Sine") {
-        isInHiddenSpace <- isInHiddenSpace.Sine
-        ensureOutlyingBehavior <- ensureOutlyingBehavior.Sine
+      isInHiddenSpace <- isInHiddenSpace.Sine
+      ensureOutlyingBehavior <- ensureOutlyingBehavior.Sine
+      constructPoint <- constructPoint.Sine
     } else {
       stop("Currently unsupported dependency type")
     }
 
+    
+    
+    
+    
+    
     # Do something only if the point is already in the hidden space OR the
     # proportion of outliers is absolute.
     if(isInHiddenSpace(r, s) || (proptype=="absolute")) {
       # Do something only if the point is not already an outlier in any other
-      # subspace that has non-empty intersection
+      # subspace that has non-empty intersection.
       # If this is the case, we might destroy his outlying behavior in the
       # other subspace, which we want to avoid.
       if(!any(lapply(subspaces[outlierFlags],
@@ -468,10 +617,12 @@ generate.row <- function(dim=10,
         outlierFlags[s] <- sample(c(TRUE,FALSE),1,prob=c(prop,1-prop))
         # If we decide not to make an outlier out of it, regenerate it outside
         # of the hidden region
-        if(!outlierFlags[s]) { 
+        if(!outlierFlags[s] && method == "Rejection") { 
           while(isInHiddenSpace(r, s)) {
             r[subspaces[[s]]] <- runif(length(subspaces[[s]]))
           }
+        } else if(!outlierFlags[s] && method == "Construction") {
+            r[subspaces[[s]]] <- constructPoint(s)
         } else {
           # Just to make sure we don't go in an infinite loop in case the
           # margin is too small.
@@ -519,13 +670,13 @@ generate.row <- function(dim=10,
       } else if(dependency == "Donut") {
         outlierFlags[x] <- (sqrt(sum((r[subspaces[[x]]]-0.5)**2)) < margins[[x]]/2 - sqrt(((1/(discretize-1))**2)*2)/2) |
                            (sqrt(sum((r[subspaces[[x]]]-0.5)**2)) > 0.5+sqrt(((1/(discretize-1))**2)*2)/2)
-      } else if (dependency == "Linear"){
+      } else if(dependency == "Linear") {
         outlierFlags[x] <- isInHiddenSpace.Linear(r,x)
-      } else if (dependency == "Cross"){
+      } else if(dependency == "Cross") {
         outlierFlags[x] <- isInHiddenSpace.Cross(r,x)
-      } else if (dependency == "Hourglass") {
+      } else if(dependency == "Hourglass") {
         outlierFlags[x] <- isInHiddenSpace.Hourglass(r,x)
-      } else if (dependency == "Sine") {
+      } else if(dependency == "Sine") {
         outlierFlags[x] <- isInHiddenSpace.Sine(r,x)
       } else {
         stop("Currently unsupported dependency type")
@@ -591,6 +742,14 @@ generate.row <- function(dim=10,
 #' @param proptype Type of the proportion of outliers. Value "proportional":
 #'        depend on the size of the empty space. Value "absolute": same absolute
 #'        proportion per subspace.
+#' @param verbose Print the number of the current step.
+#' @param method Defines the point generation method. "Rejection" creates points
+#'        randomly until they fit into the dependency. "Construction" creates points
+#'        that are close to the relation with respect to the margin. If proptype is
+#'        "proportional" then first a random point is generated to check, whether the
+#'        point is in the hidden space and may become an outlier. If proptype is
+#'        "absolute" the decision whether the point becomes an outlier is made piror
+#'        to its generatrion.
 #'
 #' @author Edouard FouchÃ©, \email{edouard.fouche@kit.edu}
 #'
@@ -599,14 +758,14 @@ generate.row <- function(dim=10,
 #'         containing the \code{n} vectors and \code{labels} containing \code{n}
 #'         corresponding labels.
 generate.multiple.rows <- function(n, dim, subspaces, margins, dependency,
-                                   prop, proptype, discretize, verbose) {
+                                   prop, proptype, discretize, verbose, method="Rejection") {
   # no sanity check, assumed to be done already
   data <- data.frame()
   labels <- c()
   for(x in 1:n) {
     res <- generate.row(dim=dim, subspaces=subspaces, margins=margins,
                         dependency=dependency, prop=prop, proptype=proptype,
-                        discretize=discretize)
+                        discretize=discretize, method=method, verbose=verbose)
     data <- rbind(data, t(res$data))
     labels <- c(labels, res$label)
     if(verbose) print(c("Step:", paste(x)))

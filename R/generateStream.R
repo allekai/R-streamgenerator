@@ -12,6 +12,8 @@
 #'        proportion per subspace.  
 #' @param stream.config A stream configuration object. Should have been
 #'        generated with \code{nstep = 1}.
+#' @param verbose Prints the number of the currently generated element if TRUE.
+#' @param method Choose method of point generation. Can be "Rejection" or "Construction"
 #'
 #' @return An object of class stream, which is a List of 5 elements.
 #' - \code{data} contains the stream generated
@@ -53,7 +55,7 @@
 #' @md
 #' @export
 generate.static.stream <- function(n=1000, prop=0.01, proptype="proportional",
-                                   stream.config=NULL, verbose=FALSE) {
+                                   stream.config=NULL, verbose=FALSE, method="Rejection") {
   # Generate n points with dim dimensions where the list of subspaces are
   # generated wall-like with the size of the wall taken from margins list as
   # 1-margin. In the hidden space, a proportion prop of the points is taken as
@@ -77,7 +79,7 @@ generate.static.stream <- function(n=1000, prop=0.01, proptype="proportional",
 
   meta <- generate.multiple.rows(n, dim, subspaces, margins, prop,
                                  proptype=proptype, dependency=dependency,
-                                 discretize=discretize, verbose=verbose)
+                                 discretize=discretize, verbose=verbose, method=method)
 
   res <- list("data"=meta$data,"labels"=meta$labels, "n"=n, "prop"=prop,
               "proptype"=proptype, "allowOverlap"=allowOverlap,
@@ -106,6 +108,13 @@ generate.static.stream <- function(n=1000, prop=0.01, proptype="proportional",
 #'        value of 0.
 #' @param transition A string indication what kind of transition should occur.
 #'        Can be "Linear" (default) or "Abrupt".
+#' @param method Defines the point generation method. "Rejection" creates points
+#'        randomly until they fit into the dependency. "Construction" creates points
+#'        that are close to the relation with respect to the margin. If proptype is
+#'        "proportional" then first a random point is generated to check, whether the
+#'        point is in the hidden space and may become an outlier. If proptype is
+#'        "absolute" the decision whether the point becomes an outlier is made piror
+#'        to its generatrion.
 #'
 #' @return A an object of class \code{stream}, which is a \code{List} of 5
 #'         elements.
@@ -149,7 +158,7 @@ generate.static.stream <- function(n=1000, prop=0.01, proptype="proportional",
 #' @export
 generate.dynamic.stream <- function(n=100, prop=0.01, proptype="proportional",
                                     stream.config=NULL, verbose=FALSE,
-                                    coldstart=TRUE, transition="Linear") {
+                                    coldstart=TRUE, transition="Linear", method="Rejection") {
   sanitycheck.generate(n=n, prop=prop, stream.config=stream.config,
                        verbose=verbose)
 
@@ -188,7 +197,7 @@ generate.dynamic.stream <- function(n=100, prop=0.01, proptype="proportional",
     if(seq == 1) {
       # If we want a coldstart, the starting margins values will be 0 for all
       # subspaces. Otherwise, the provided value is used.
-      # TODO @apoth: Check, if this influences whether a drift is possible in
+      # TODO @apoth: Check, if this influences whether a drift is possible in /
       #              from the first to the second step.
       subspaces_state <- subspaceslist[[seq]]
       if(coldstart) {
@@ -257,7 +266,8 @@ generate.dynamic.stream <- function(n=100, prop=0.01, proptype="proportional",
       # Generate a row 
       res <- generate.row(dim=dim, subspaces=subspaces_state,
                           margins=margins_state, prop=prop, proptype=proptype,
-                          dependency=dependency, discretize=discretize)
+                          dependency=dependency, discretize=discretize,
+                          method=method)
       data <- rbind(data, t(res$data))
       labels <- c(labels, res$label)
     }

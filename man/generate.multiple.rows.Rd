@@ -2,30 +2,46 @@
 % Please edit documentation in R/generateRow.R
 \name{generate.multiple.rows}
 \alias{generate.multiple.rows}
-\title{Helper function that generate multiple rows}
+\title{Helper function that generates multiple rows.}
 \usage{
-generate.multiple.rows(n, dim, subspaces, margins, dependency, prop, proptype,
-  discretize)
+generate.multiple.rows(n, dim, subspaces, margins, dependency, prop,
+  proptype, discretize, verbose, method = "Rejection")
 }
 \arguments{
 \item{n}{Number of rows to generate.}
 
 \item{dim}{Number of dimension of the vector generate.}
 
-\item{subspaces}{List of subspaces that contain a hidden space (i.e they show some dependency).}
+\item{subspaces}{List of subspaces that contain a hidden space (i.e they
+show some dependency).}
 
 \item{margins}{List of margins that correspond to each subspace.}
 
-\item{prop}{Probability of a point belonging to the hidden space of a subspace to become an outlier.}
+\item{prop}{Probability of a point belonging to the hidden space of a
+subspace to become an outlier.}
 
-\item{proptype}{Type of the proportion of outliers. Value "proportional": depend on the size of the empty space. Value "absolute": same absolute proportion per subspace.}
+\item{proptype}{Type of the proportion of outliers. Value "proportional":
+depend on the size of the empty space. Value "absolute": same absolute
+proportion per subspace.}
+
+\item{verbose}{Print the number of the current step.}
+
+\item{method}{Defines the point generation method. "Rejection" creates points
+randomly until they fit into the dependency. "Construction" creates points
+that are close to the relation with respect to the margin. If proptype is
+"proportional" then first a random point is generated to check, whether the
+point is in the hidden space and may become an outlier. If proptype is
+"absolute" the decision whether the point becomes an outlier is made piror
+to its generatrion.}
 }
 \value{
-A list with 2 elements where \code{data} is a data.frame object containing the \code{n} vectors and \code{labels} containing \code{n} corresponding labels.
+A list with 2 elements where \code{data} is a data.frame object
+containing the \code{n} vectors and \code{labels} containing \code{n}
+corresponding labels.
 }
 \description{
-Helper function that generate multiple rows with the same characteristics
-Useful to generate a static stream
+Helper function that generates multiple rows with the same characteristics.
+Useful to generate a static stream.
 }
 \author{
 Edouard Fouché, \email{edouard.fouche@kit.edu}
