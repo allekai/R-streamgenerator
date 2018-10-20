@@ -345,6 +345,9 @@ generate.row <- function(dim=10,
     }
 
     n <- length(subspaces[[subspace]])
+    if (n > 3) {
+      n <- 3
+    }
 
     # We need to calculate the distance of the point from the Sine Dependency
     # Curve (SDC). This can be achieved with the standard euclidian distance (D).
@@ -496,13 +499,14 @@ generate.row <- function(dim=10,
     point
   }
   
-  constructPoint.Donut <- function(n) {
+  constructPoint.Donut <- function(subspace) {
     # Still has some random characteristic.
     # Based on Marsaglia 1972.
     # Generate random point inside the unit hypercube.
     # Rescale it to the surface of a n-sphere, add some
     # noise to the point and resacle it to fit into the
     # unit hypercube again.
+    n <- length(subspaces[[subspace]])
     x <- runif(n, -1, 1)
     r <- sqrt(sum(x**2))
     while(r >= 1) {
@@ -527,28 +531,33 @@ generate.row <- function(dim=10,
     diagonals.list <- createDiagList(n)
     index <- round(runif(1, 1, 2^(n - 1)))  # Index of random diagonal
     direction <- diagonals.list$ends[[index]] - diagonals.list$starts[[index]]
-    point  <- linDep(direction, diagonals.list$starts[[index]], margins[[subspace]])
-    point
+    point  <- linDep(as.vector(direction),
+                     as.vector(diagonals.list$starts[[index]]),
+                     margins[[subspace]])
+    as.vector(unlist(point))
   }
   
   constructPoint.Hourglass <- function(subspace) {
     #browser()
     n <- length(subspaces[[subspace]])
     # Chose opposing dimension
-    oppDim <- sample(x = 1:n, size = 1)
+    oppDim <- 1  # For random opposing dim use: sample(x = 1:n, size = 1)
     # Chose starting corner
     start <- sample(x = c(0,1), size = n, replace = TRUE)
     # Create a HOP
     end <- sample(x = c(0,1), size = n, replace = TRUE)
     end[oppDim] <- (start[oppDim] - 1) * (-1)
-    point <- linDep2(direction = as.vector(end - start, mode = "integer"),
+    point <- linDep(direction = as.vector(end - start, mode = "integer"),
                      suppVec = start,
                      margin = margins[[subspace]])
-    point
+    as.vector(unlist(point))
   }
   
   constructPoint.Sine <- function(subspace) {
     n <- length(subspaces[[subspace]])
+    if(n > 3) {
+      n <- 3
+    }
     m <- 1 - margins[[subspace]]
     point <- wrap.sin.star(s = runif(1), n = n)
     start.point <- point
@@ -688,23 +697,25 @@ generate.row <- function(dim=10,
     # Do the process afterwards to minimize bug risks
     # i.e. make the labeling process independent from the generation
     for(x in 1:length(subspaces)) {
-      if(dependency == "Wall") {
-        outlierFlags[x] <- all(r[subspaces[[x]]] > (1-margins[[x]]))
-      } else if(dependency == "Square") {
-        outlierFlags[x] <- all(abs(r[subspaces[[x]]]-0.5) < margins[[x]]/2)
-      } else if(dependency == "Donut") {
-        outlierFlags[x] <- sqrt(sum((r[subspaces[[x]]]-0.5)**2)) < margins[[x]]/2 |
-                           sqrt(sum((r[subspaces[[x]]]-0.5)**2)) > 0.5
-      } else if (dependency == "Linear") {
-        outlierFlags[x] <- isInHiddenSpace.Linear(r,x)
-      } else if (dependency == "Cross") {
-        outlierFlags[x] <- isInHiddenSpace.Cross(r,x)
-      } else if (dependency == "Hourglass") {
-        outlierFlags[x] <- isInHiddenSpace.Hourglass(r,x)
-      } else if (dependency == "Sine") {
-        outlierFlags[x] <- isInHiddenSpace.Sine(r,x)
-      } else {
-        stop("Currently unsupported dependency type")
+      if(method == "Rejection") {
+        if(dependency == "Wall") {
+          outlierFlags[x] <- all(r[subspaces[[x]]] > (1-margins[[x]]))
+        } else if(dependency == "Square") {
+          outlierFlags[x] <- all(abs(r[subspaces[[x]]]-0.5) < margins[[x]]/2)
+        } else if(dependency == "Donut") {
+          outlierFlags[x] <- sqrt(sum((r[subspaces[[x]]]-0.5)**2)) < margins[[x]]/2 |
+                             sqrt(sum((r[subspaces[[x]]]-0.5)**2)) > 0.5
+        } else if (dependency == "Linear") {
+          outlierFlags[x] <- isInHiddenSpace.Linear(r,x)
+        } else if (dependency == "Cross") {
+          outlierFlags[x] <- isInHiddenSpace.Cross(r,x)
+        } else if (dependency == "Hourglass") {
+          outlierFlags[x] <- isInHiddenSpace.Hourglass(r,x)
+        } else if (dependency == "Sine") {
+          outlierFlags[x] <- isInHiddenSpace.Sine(r,x)
+        } else {
+          stop("Currently unsupported dependency type")
+        }
       }
     }
   }
