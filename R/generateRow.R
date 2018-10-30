@@ -216,11 +216,10 @@ generate.row <- function(dim=10,
     start.val <- new.val
     m <- 1-margin
     for (d in 1:length(suppVec)) {
-      new.val[[d]] <- new.val[[d]] + runif(1, -m/2, m/2)
+      offset <- runif(1, -m/2, m/2)
+      new.val[[d]] <- new.val[[d]] + offset
       if(new.val[[d]] < 0 || new.val[[d]] > 1) {
-        while(new.val[[d]] < 0 || new.val[[d]] > 1) {
-          new.val[[d]] <- start.val[[d]] + runif(1, -m/2, m/2)
-        }
+        new.val[[d]] <- start.val[[d]] - offset
       }
     }
     new.val
@@ -490,7 +489,7 @@ generate.row <- function(dim=10,
     point
   }
   
-  construcPoint.Square <- function(subspace) {
+  constructPoint.Square <- function(subspace) {
     n <- length(subspaces[[subspace]])
     index <- sample(x = 1:n, size = 1)  # Index of dimension < margin
     point <- runif(n)
@@ -528,11 +527,11 @@ generate.row <- function(dim=10,
   
   constructPoint.Cross <- function(subspace) {
     n <- length(subspaces[[subspace]])
-    diagonals.list <- createDiagList(n)
-    index <- round(runif(1, 1, 2^(n - 1)))  # Index of random diagonal
-    direction <- diagonals.list$ends[[index]] - diagonals.list$starts[[index]]
+    start <- sample(x = c(0,1), size = n, replace = TRUE)
+    end <- createOppositePoint(start)
+    direction <- end - start
     point  <- linDep(as.vector(direction),
-                     as.vector(diagonals.list$starts[[index]]),
+                     start,
                      margins[[subspace]])
     as.vector(unlist(point))
   }
