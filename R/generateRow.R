@@ -611,40 +611,46 @@ generate.row <- function(dim=10,
     
     
     
-    
-    # Do something only if the point is already in the hidden space OR the
-    # proportion of outliers is absolute.
-    if(isInHiddenSpace(r, s) || (proptype=="absolute")) {
-      # Do something only if the point is not already an outlier in any other
-      # subspace that has non-empty intersection.
-      # If this is the case, we might destroy his outlying behavior in the
-      # other subspace, which we want to avoid.
-      if(!any(lapply(subspaces[outlierFlags],
-                     function(y) length(intersect(subspaces[[s]],y))) > 0)) {
-        # Choose if it is an outlier in this subspace, with probability prob
-        outlierFlags[s] <- sample(c(TRUE,FALSE),1,prob=c(prop,1-prop))
-        # If we decide not to make an outlier out of it, regenerate it outside
-        # of the hidden region
-        if(!outlierFlags[s] && method == "Rejection") { 
-          while(isInHiddenSpace(r, s)) {
-            r[subspaces[[s]]] <- runif(length(subspaces[[s]]))
-          }
-        } else if(!outlierFlags[s] && method == "Construction") {
-            r[subspaces[[s]]] <- constructPoint(s)
-        } else {
-          # Just to make sure we don't go in an infinite loop in case the
-          # margin is too small.
-          if(margins[[s]] >= 0.1) {
-            while(!isInHiddenSpace(r, s)) {
+    if(prop != 0) {
+      # Do something only if the point is already in the hidden space OR the
+      # proportion of outliers is absolute.
+      if(isInHiddenSpace(r, s) || (proptype=="absolute")) {
+        # Do something only if the point is not already an outlier in any other
+        # subspace that has non-empty intersection.
+        # If this is the case, we might destroy his outlying behavior in the
+        # other subspace, which we want to avoid.
+        if(!any(lapply(subspaces[outlierFlags],
+                       function(y) length(intersect(subspaces[[s]],y))) > 0)) {
+          # Choose if it is an outlier in this subspace, with probability prob
+          outlierFlags[s] <- sample(c(TRUE,FALSE),1,prob=c(prop,1-prop))
+          # If we decide not to make an outlier out of it, regenerate it outside
+          # of the hidden region
+          if(!outlierFlags[s] && method == "Rejection") { 
+            while(isInHiddenSpace(r, s)) {
               r[subspaces[[s]]] <- runif(length(subspaces[[s]]))
             }
-            # If we decide to make an outlier out of it:
-            # Add a little margin (20% of the hidden space) to avoid possible
-            # ambiguities about the nature of the outlier
-            r[subspaces[[s]]] <- ensureOutlyingBehavior(r,s)
+          } else if(!outlierFlags[s] && method == "Construction") {
+              r[subspaces[[s]]] <- constructPoint(s)
+          } else {
+            # Just to make sure we don't go in an infinite loop in case the
+            # margin is too small.
+            if(margins[[s]] >= 0.1) {
+              while(!isInHiddenSpace(r, s)) {
+                r[subspaces[[s]]] <- runif(length(subspaces[[s]]))
+              }
+              # If we decide to make an outlier out of it:
+              # Add a little margin (20% of the hidden space) to avoid possible
+              # ambiguities about the nature of the outlier
+              r[subspaces[[s]]] <- ensureOutlyingBehavior(r,s)
+            }
           }
         }
       }
+    } else {
+      # prop = 0 --> No outlier at all. Just construct the point
+      # according to the dependency.
+      outlierFlags[s] <- FALSE
+      r[subspaces[[s]]] <- constructPoint(s)
     }
   }
 
