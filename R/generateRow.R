@@ -190,11 +190,12 @@ generate.row <- function(dim=10,
     #   A vector according to the sine dependency where each vector element
     #   is the reshaped sine value of it's former element, starting with the
     #   first element being s.
-    if (n == 3) {
-      c(s, sin.star(s), sin.star(sin.star(s)))
-    } else {
-        c(s, sin.star(s))
+    res <- vector(length = n)
+    res[1] <- s
+    for (i in 2:n) {
+      res[i] <- sin.star(res[i-1])
     }
+    res
   }
   
   linDep <- function(direction, suppVec, margin=0.1){
@@ -344,9 +345,6 @@ generate.row <- function(dim=10,
     }
 
     n <- length(subspaces[[subspace]])
-    if (n > 3) {
-      n <- 3
-    }
 
     # We need to calculate the distance of the point from the Sine Dependency
     # Curve (SDC). This can be achieved with the standard euclidian distance (D).
@@ -554,18 +552,14 @@ generate.row <- function(dim=10,
   
   constructPoint.Sine <- function(subspace) {
     n <- length(subspaces[[subspace]])
-    if(n > 3) {
-      n <- 3
-    }
     m <- 1 - margins[[subspace]]
     point <- wrap.sin.star(s = runif(1), n = n)
     start.point <- point
     for (d in 1:n) {
-      point[[d]] <- point[[d]] + runif(1, -m/2, m/2)
+      offset <- runif(1, -m/2, m/2)
+      point[[d]] <- point[[d]] + offset
       if(point[[d]] < 0 || point[[d]] > 1) {
-        while(point[[d]] < 0 || point[[d]] > 1) {
-          point[[d]] <- start.point[[d]] + runif(1, -m/2, m/2)
-        }
+        point[[d]] <- start.point[[d]] - offset
       }
     }
     point
@@ -650,7 +644,9 @@ generate.row <- function(dim=10,
       # prop = 0 --> No outlier at all. Just construct the point
       # according to the dependency.
       outlierFlags[s] <- FALSE
-      r[subspaces[[s]]] <- constructPoint(s)
+      p <- constructPoint(s)
+      if (length(p) != subspaces[[s]]) stop(paste(length(p), "!=", subspaces[[s]]))
+      r[subspaces[[s]]] <- p
     }
   }
 
