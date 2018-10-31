@@ -6,7 +6,7 @@
 \alias{streamgenerator-package}
 \title{streamgenerator}
 \description{
-A statistical muldi-dimensional stream generator for benchmarking stream mining algorithms.
+A statistical multi-dimensional stream generator for benchmarking stream mining algorithms.
 }
 \seealso{
 Currently the most useful functions of this package:

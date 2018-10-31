@@ -13,7 +13,8 @@ LazyLoad: Yes
 LazyData: TRUE
 Encoding: UTF-8
 Imports: 
-	assertthat
+    assertthat,
+    rootSolve
 RoxygenNote: 6.1.0
 NeedsCompilation: no
 Repository: CRAN
