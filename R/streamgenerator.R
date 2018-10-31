@@ -1,5 +1,5 @@
 #' @title streamgenerator
-#' @description A statistical muldi-dimensional stream generator for benchmarking stream mining algorithms.
+#' @description A statistical multi-dimensional stream generator for benchmarking stream mining algorithms.
 #'
 #' @seealso Currently the most useful functions of this package:
 #' * \code{\link{generate.dynamic.stream}} : generate a dynamic stream
