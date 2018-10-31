@@ -644,9 +644,7 @@ generate.row <- function(dim=10,
       # prop = 0 --> No outlier at all. Just construct the point
       # according to the dependency.
       outlierFlags[s] <- FALSE
-      p <- constructPoint(s)
-      if (length(p) != subspaces[[s]]) stop(paste(length(p), "!=", subspaces[[s]]))
-      r[subspaces[[s]]] <- p
+      r[subspaces[[s]]] <- constructPoint(s)
     }
   }
 
