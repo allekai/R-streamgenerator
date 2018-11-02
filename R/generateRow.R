@@ -576,7 +576,7 @@ generate.row <- function(dim=10,
     } else if(dependency == "Square") {
       isInHiddenSpace <- isInHiddenSpace.Square
       ensureOutlyingBehavior <- ensureOutlyingBehavior.Square
-      constructPoint <- construcPoint.Square
+      constructPoint <- constructPoint.Square
     } else if(dependency == "Donut") {
       isInHiddenSpace <- isInHiddenSpace.Donut
       ensureOutlyingBehavior <- ensureOutlyingBehavior.Donut
